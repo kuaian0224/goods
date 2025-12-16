@@ -50,6 +50,14 @@ def train_one_fold(cfg, fold: int, train_df: pd.DataFrame, val_df: pd.DataFrame)
     train_loader, val_loader = build_dataloaders(cfg, train_df, val_df, tokenizer)
 
     model = build_model(cfg).to(device)
+    init_ckpt = cfg["train"].get("init_ckpt")
+    if init_ckpt:
+        ckpt_path = init_ckpt.format(fold=fold)
+        if os.path.exists(ckpt_path):
+            state = torch.load(ckpt_path, map_location=device)
+            model.load_state_dict(state["model"], strict=False)
+        else:
+            print(f"[WARN] init_ckpt not found for fold {fold}: {ckpt_path}")
     optimizer = build_optimizer(cfg, model)
 
     grad_accum = cfg["train"].get("grad_accum", 1)

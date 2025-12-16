@@ -74,12 +74,25 @@ python tools/train.py --config configs/fusion.yaml --fold -1
 - 图片-only：`python tools/train.py --config configs/baseline_image.yaml --fold 0`
 - 文本-only：`python tools/train.py --config configs/baseline_text.yaml --fold 0`
 
+### CLIP 两阶段拉分方案（ViT-L/14）
+- 阶段 1：冻结 CLIP，只训练分类头（更稳）。`python tools/train.py --config configs/clip_fusion_stage1.yaml --fold 0`（或 `-1` 全折）。hidden_dim=512，lr/head=1e-3，epochs=5。
+- 阶段 2：解冻 CLIP，小 lr 微调 + head 中等 lr。`python tools/train.py --config configs/clip_fusion_stage2.yaml --fold 0`。配置里 `train.init_ckpt` 会自动从阶段 1 对应折的 best.pt 预热；image/text lr=1e-5，head lr=3e-4，batch=48。
+- `configs/clip_fusion.yaml` 为阶段 1 的简化版，便于快速跑单阶段。
+- 显存吃紧可调低 batch 或继续冻结（`clip_trainable: false`）；若端到端微调，视显存降低 `lrs.head`、`train.batch_size`。
+
 ## 推理与提交
 ```
 python tools/infer.py --config configs/fusion.yaml
 ```
 - 自动加载 `cfg.infer.ckpt_dir` 下的 `fold*/best.pt`（或单个 best.pt）
 - 多折概率平均，TTA 可选，输出 `submission.csv`
+
+### 多模型/多尺度融合
+- 使用 `tools/infer_ensemble.py` 对多个配置的概率做加权平均：
+  ```
+  python tools/infer_ensemble.py --configs configs/fusion.yaml configs/clip_fusion_stage2.yaml --weights 1 1 --output submission_ensemble.csv
+  ```
+- CLIP 建议多尺度：复制 `configs/clip_fusion_stage2.yaml` 改 `data.img_size: 256`（或 240），再跑一遍 `tools/infer.py`，与 224 尺度或 convnext+deberta 分支一起融合。
 
 ## 提速建议（大显卡如 5090）
 - `train.batch_size` 增大到 64/96/128（OOM 再降或用 `grad_accum`）

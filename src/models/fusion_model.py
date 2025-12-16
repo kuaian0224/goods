@@ -1,6 +1,11 @@
 import torch
 import torch.nn as nn
 
+try:
+    import open_clip
+except ImportError:  # pragma: no cover
+    open_clip = None
+
 from .heads import ClassificationHead
 from .image_encoder import ImageEncoder
 from .text_encoder import TextEncoder
@@ -84,3 +89,49 @@ class FusionModel(nn.Module):
         txt_feat = self.text_encoder(batch["input_ids"], batch["attention_mask"])
         fused = self._fuse(img_feat, txt_feat)
         return self.head(fused)
+
+
+class ClipFusionModel(nn.Module):
+    def __init__(
+        self,
+        clip_backbone: str,
+        clip_pretrained: str,
+        num_classes: int,
+        dropout: float,
+        hidden_dim: int,
+        trainable: bool = False,
+    ):
+        super().__init__()
+        if open_clip is None:
+            raise ImportError("open_clip is required for ClipFusionModel. Please install open-clip-torch.")
+        self.clip_model = open_clip.create_model(clip_backbone, pretrained=clip_pretrained)
+        self.frozen = not trainable
+        if self.frozen:
+            for p in self.clip_model.parameters():
+                p.requires_grad = False
+        embed_dim = self.clip_model.text_projection.shape[1]
+        img_dim = getattr(self.clip_model.visual, "output_dim", embed_dim)
+        head_in = img_dim + embed_dim
+        self.head = ClassificationHead(in_dim=head_in, num_classes=num_classes, hidden_dim=hidden_dim, dropout=dropout)
+
+    def forward(self, batch) -> torch.Tensor:
+        if self.frozen:
+            with torch.no_grad():
+                img_feat = self.clip_model.encode_image(batch["pixel_values"])
+                txt_feat = self.clip_model.encode_text(batch["input_ids"])
+        else:
+            img_feat = self.clip_model.encode_image(batch["pixel_values"])
+            txt_feat = self.clip_model.encode_text(batch["input_ids"])
+
+        img_feat = img_feat.float()
+        txt_feat = txt_feat.float()
+        fused = torch.cat([img_feat, txt_feat], dim=1)
+        return self.head(fused)
+
+    @property
+    def image_encoder(self):
+        return self.clip_model.visual
+
+    @property
+    def text_encoder(self):
+        return self.clip_model

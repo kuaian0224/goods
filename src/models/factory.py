@@ -1,4 +1,4 @@
-from .fusion_model import FusionModel, ImageOnlyModel, TextOnlyModel
+from .fusion_model import ClipFusionModel, FusionModel, ImageOnlyModel, TextOnlyModel
 
 
 def build_model(cfg):
@@ -32,5 +32,14 @@ def build_model(cfg):
             num_classes=num_classes,
             dropout=dropout,
             hidden_dim=hidden_dim,
+        )
+    if model_type == "clip_fusion":
+        return ClipFusionModel(
+            clip_backbone=model_cfg.get("clip_backbone", "ViT-L-14"),
+            clip_pretrained=model_cfg.get("clip_pretrained", "openai"),
+            num_classes=num_classes,
+            dropout=dropout,
+            hidden_dim=hidden_dim,
+            trainable=model_cfg.get("clip_trainable", False),
         )
     raise ValueError(f"Unsupported model type: {model_type}")

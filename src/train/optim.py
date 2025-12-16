@@ -19,12 +19,25 @@ def _build_param_groups(model, base_lr: float, lr_overrides: dict | None):
     assigned = set()
 
     def add_group(name: str, params):
-        params = [p for p in params if p.requires_grad]
+        params = [p for p in params if p.requires_grad and id(p) not in assigned]
         if not params:
             return
         lr = _resolve_lr(name, base_lr, lr_overrides)
         groups.append({"params": params, "lr": lr})
         assigned.update(id(p) for p in params)
+
+    # Handle OpenCLIP separately to split visual/text params
+    if hasattr(model, "clip_model"):
+        vis_params, txt_params = [], []
+        for n, p in model.clip_model.named_parameters():
+            if not p.requires_grad:
+                continue
+            if n.startswith("visual."):
+                vis_params.append(p)
+            else:
+                txt_params.append(p)
+        add_group("image_encoder", vis_params)
+        add_group("text_encoder", txt_params)
 
     if hasattr(model, "image_encoder"):
         add_group("image_encoder", model.image_encoder.parameters())
