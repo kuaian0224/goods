@@ -4,7 +4,7 @@
 
 ## 目录结构
 ```
-project/
+goods/
   configs/            # 配置
   data/               # 数据（需自行放置）
     train.csv
@@ -21,7 +21,7 @@ project/
 
 ## 环境准备
 - Python 3.10+
-- 进入 `project/` 安装依赖：`pip install -r requirements.txt`
+- 进入 `goods/` 安装依赖：`pip install -r requirements.txt`
 
 ## 数据要求与字段适配
 - 必须列：`id`
