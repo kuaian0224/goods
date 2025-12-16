@@ -1,0 +1,47 @@
+exp_name: "text_baseline"
+seed: 42
+device: "cuda"
+
+data:
+  root: "data"
+  train_csv: "train.csv"
+  test_csv: "test.csv"
+  train_img_dir: "train_images"
+  test_img_dir: "test_images"
+  id_col: "id"
+  label_col: "categories"
+  text_cols: ["title", "description"]
+  max_len: 64
+  num_classes: 21
+  multi_image_mode: "first"
+  img_size: 224
+  num_workers: 4
+
+model:
+  type: "text"
+  image_backbone: "convnext_tiny"        # unused
+  image_pretrained: false
+  text_backbone: "bert-base-multilingual-cased"
+  fusion: "concat"
+  dropout: 0.1
+  hidden_dim: 0
+
+train:
+  folds: 5
+  fold: 0
+  epochs: 5
+  batch_size: 32
+  lr: 2e-5
+  weight_decay: 0.01
+  amp: true
+  grad_accum: 1
+  label_smoothing: 0.05
+  class_weight: false
+  early_stop_patience: 2
+  log_every: 50
+
+infer:
+  batch_size: 128
+  tta: false
+  ckpt_dir: "checkpoints/text_baseline"
+  output: "submission.csv"

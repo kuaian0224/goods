@@ -1,0 +1,16 @@
+# 数据与模型
+data/
+checkpoints/
+outputs/
+logs/
+submission.csv
+*.pt
+*.pth
+*.safetensors
+
+# 工具和缓存
+goods.zip
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
