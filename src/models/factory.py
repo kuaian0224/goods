@@ -41,5 +41,6 @@ def build_model(cfg):
             dropout=dropout,
             hidden_dim=hidden_dim,
             trainable=model_cfg.get("clip_trainable", False),
+            force_quick_gelu=model_cfg.get("clip_force_quick_gelu", False),
         )
     raise ValueError(f"Unsupported model type: {model_type}")

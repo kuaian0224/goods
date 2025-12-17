@@ -1,9 +1,9 @@
 # 数据与模型
-data/
-checkpoints/
-outputs/
-logs/
-submission.csv
+/data/
+/checkpoints/
+/outputs/
+/logs/
+/submission.csv
 *.pt
 *.pth
 *.safetensors

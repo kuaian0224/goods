@@ -100,11 +100,16 @@ class ClipFusionModel(nn.Module):
         dropout: float,
         hidden_dim: int,
         trainable: bool = False,
+        force_quick_gelu: bool = False,
     ):
         super().__init__()
         if open_clip is None:
             raise ImportError("open_clip is required for ClipFusionModel. Please install open-clip-torch.")
-        self.clip_model = open_clip.create_model(clip_backbone, pretrained=clip_pretrained)
+        self.clip_model = open_clip.create_model(
+            clip_backbone,
+            pretrained=clip_pretrained,
+            force_quick_gelu=force_quick_gelu,
+        )
         self.frozen = not trainable
         if self.frozen:
             for p in self.clip_model.parameters():

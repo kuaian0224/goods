@@ -23,6 +23,7 @@ model:
   clip_backbone: "ViT-L-14"
   clip_pretrained: "openai"
   clip_trainable: false
+  clip_force_quick_gelu: true
   dropout: 0.2
   hidden_dim: 512
 
